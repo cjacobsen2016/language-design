@@ -8,11 +8,6 @@ This repository contains documents related `rat` language design. If there is an
 
 * [Language Design Principles](https://github.com/go-rat/language-design/blob/master/principles.md)
 * [Language Specification](https://github.com/go-rat/language-design/blob/master/spec.md)
-* Code Samples
-  * [Generic Type](https://github.com/go-rat/language-design/blob/master/sample_generic_type.md)
-  * [Generic Type Instantiation](https://github.com/go-rat/language-design/blob/master/sample_generic_instantiation.md)
-  * [Built-in Function Overload](https://github.com/go-rat/language-design/blob/master/sample_overload.md)
-  * [Generator](https://github.com/go-rat/language-design/blob/master/sample_generator.md)
 
 ## Motivation ##
 
