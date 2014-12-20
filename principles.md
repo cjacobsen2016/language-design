@@ -37,6 +37,6 @@ for k, v := range m {
 	// ...
 }
 
-// Provide struct function just like a normal struct.
+// Generic struct can have methods.
 m.Clear()
 ```
