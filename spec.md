@@ -348,6 +348,90 @@ type SuperListNode struct {
 }
 ```
 
+## Generic interface ##
+
+Generic interface is an interface contains a method with name `generic`. All types, not variables, in this `generic` method are type variables. They can be used in all methods of this interface.
+
+```go
+// A generic interface.
+type I interface {
+	generic(T)
+	F(T)
+}
+```
+
+Generic interface can be used to check whether a generic struct implements expected methods. It cannot be used in any type assertion as it requires runtime information.
+
+```go
+type I interface {
+	generic(T)
+	F(T)
+}
+
+// S1 implements I.
+type S1 struct {}
+func (s1 S1) F(v int)
+
+// S2 also implements I.
+type S2 struct {
+	T2 generic
+}
+func (s2 S2) F(v s2.T2)
+
+// S3 doesn't implement I, as S3#F takes 2 parameters instead of 1.
+type S3 struct {
+	T3 generic
+}
+func (s3 S3) F(T generic, v int) {}
+```
+
+When a generic interface is instantiated, it works exactly the same an non-generic interface.
+
+```go
+type I interface {
+	generic(T)
+	Add(T)
+}
+
+IInt := generic(I, int)
+
+// S implements IInt.
+type S struct {}
+func (s S) Add(int) {}
+
+var s S
+s.(IInt) // OK.
+```
+
+Type variable cannot be used in interface method other than `generic`.
+
+```go
+type I interface {
+	F(T generic) // Compile-time error.
+}
+```
+
+If a generic interface is embedded in another interface, all type variables defined in this interface must also be defined in the interface embedding it. So, only generic interface can embed generic interface.
+
+```go
+type I1 interface {
+	generic(T)
+	F(T)
+}
+
+// Valid.
+type I2 interface {
+	generic(T)
+	I1
+}
+
+// Compile-time error. I3 doesn't have a type variable named T.
+type I3 interface {
+	generic(S)
+	I1
+}
+```
+
 ## Predeclared identifier `generic` ##
 
 The predeclared identifier `generic` is the key of generic.
@@ -380,6 +464,13 @@ type S struct {
 	T generic
 }
 SInt := generic(S, int)
+
+// Instantiate a generic interface.
+type I interface {
+	generic(T)
+	F(T)
+}
+IBool := generic(I, bool)
 ```
 
 One can use it to instantiate a generic struct in type.
@@ -432,7 +523,8 @@ One can use `generic` as a function. It takes any variable as parameter.
 
 * If a value variable is provided, `generic` will return type of the variable.
 * If a type variable is provided, `generic` will work as `type` and define new type variable.
-* If a type variable is a generic struct, `generic` can take additional parameters to instantiate the generic struct.
+  * If the type variable is a generic struct, `generic` can take additional parameters to instantiate the generic struct.
+  * If the type variable is a generic interface, `generic` can take additional parameters to instantiate the generic interface.
 * Type of `nil` is a zero type.
 * If no parameter is provided, return a zero type.
 
