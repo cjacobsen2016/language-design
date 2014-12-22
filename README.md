@@ -1,8 +1,8 @@
-# Language design for `rat` #
+# The Rat Programming Language Specification #
 
-`Rat` is a general purpose language on top of `go`. In short, `rat` is a superset of `go` plus generic and generator. `Rat` uss standard `go` syntax to express generic and generator. All `go` features are available in `rat` without any modification.
+`Rat` is a general purpose language on top of `go`. In short, `rat` is a superset of `go` plus generic and generator. `Rat` uses standard `go` syntax to express generic and generator. All `go` features are available in `rat` without any modification.
 
-This repository contains documents related `rat` language design. If there is any language change, one should open issue in this repo. Issue will be closed by a change to some language spec files.
+This repository contains documents related `rat` language design. If there is any language change, one should open issue in this repository. Issue will be closed by a change to some language spec files.
 
 ## Table Of Content ##
 
