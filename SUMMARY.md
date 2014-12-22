@@ -11,7 +11,7 @@
   * [Operators](type_variable/operators.md)
   * [Function/Method Signature](type_variable/function_method_signature.md)
 * [Generic Struct](generic_struct/intro.md)
-	* [Instantiate Generic Struct](generic_struct/instantiate_generic_struct.md)
+  * [Instantiate Generic Struct](generic_struct/instantiate_generic_struct.md)
   * [Type Variable Field](generic_struct/type_variable_field.md)
   * [Method Declaration](generic_struct/method_declaration.md)
   * [Generic Struct As Field](generic_struct/generic_struct_as_field.md)
