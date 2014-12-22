@@ -1,4 +1,4 @@
-### Function/method signature ###
+## Function/method signature ##
 
 Type variable can be used as type in function or method signature. When defining a type variable in signature, it means function/method will accept a type variable as parameter.
 

@@ -1,4 +1,4 @@
-### Type variable and `type` keyword ###
+## Type variable and `type` keyword ##
 
 Type variable can store any valid type. On the other hand, any type, including predeclared types, can be treated as a type variable. Any valid `go` type is a type variable and can be used as a variable.
 

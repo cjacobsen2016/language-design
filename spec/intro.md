@@ -1,4 +1,4 @@
-## Introduction ##
+# Introduction #
 
 This is a reference manual for the `rat` programming language.
 

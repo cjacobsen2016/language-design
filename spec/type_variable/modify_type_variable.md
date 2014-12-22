@@ -1,4 +1,4 @@
-### Modify type variable ###
+## Modify type variable ##
 
 Type variable is mutable only in current code block and children blocks which can be logically inlined in compile-time. Specifically, type variable can be modified in a child block only if this block is a solely block or a `if` statement whose expression is a compile-time constant.
 
