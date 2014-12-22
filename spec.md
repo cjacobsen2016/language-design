@@ -48,7 +48,7 @@ Type variable can be used in any expression, including assignment, function sign
 T, i := int, 0
 
 // Use type variable in function signature.
-func F(T generic, i int) (S generic, ok bool)
+func F(T generic, i int) (S generic, ok bool) {}
 
 // Use type variable in struct.
 type S struct {
@@ -370,13 +370,13 @@ type I interface {
 
 // S1 implements I.
 type S1 struct {}
-func (s1 S1) F(v int)
+func (s1 S1) F(v int) {}
 
 // S2 also implements I.
 type S2 struct {
 	T2 generic
 }
-func (s2 S2) F(v s2.T2)
+func (s2 S2) F(v s2.T2) {}
 
 // S3 doesn't implement I, as S3#F takes 2 parameters instead of 1.
 type S3 struct {
@@ -385,7 +385,7 @@ type S3 struct {
 func (s3 S3) F(T generic, v int) {}
 ```
 
-When a generic interface is instantiated, it works exactly the same an non-generic interface.
+When a generic interface is fully instantiated, it works exactly the same an non-generic interface.
 
 ```go
 type I interface {
@@ -403,20 +403,40 @@ var s S
 s.(IInt) // OK.
 ```
 
+If `generic` method has result, the result will be instantiated as method receiver's type. As there is only one receiver for a method, it's meanless to declare more than one type variables in result.
+
+```go
+type I interface {
+	generic() Receiver
+	New() Receiver
+}
+
+// T1 implements I.
+type T1 int
+func (t1 T1) New() T1
+
+// T2 doesn't implement I.
+// Return type doesn't match receiver type as T2 != int.
+type T2 int
+func (t2 T2) New() int {}
+```
+
 Type variable cannot be used in interface method other than `generic`.
 
 ```go
 type I interface {
-	F(T generic) // Compile-time error.
+	InvalidM(T generic) // Compile-time error.
 }
 ```
+
+### Embedding generic interface ###
 
 If a generic interface is embedded in another interface, all type variables defined in this interface must also be defined in the interface embedding it. So, only generic interface can embed generic interface.
 
 ```go
 type I1 interface {
 	generic(T)
-	F(T)
+	M(T)
 }
 
 // Valid.
@@ -429,6 +449,68 @@ type I2 interface {
 type I3 interface {
 	generic(S)
 	I1
+}
+```
+
+### Variadic type variables in generic interface ###
+
+The `generic` method in a generic interface can have any number of variadic type variables. Each of them can represent any number of parameters in a method. Once a generic interface is instantiated, variadic type variables are set to a specific list of parameters.
+
+```go
+type I interface {
+	generic(...Args)
+
+	// M1 and M2 must have the same parameters in type.
+	M1(Args)
+	M2(Args)
+}
+
+// T1 implements I.
+type T1 int
+func (t1 T1) M1(int, bool) {}
+func (t1 T1) M2(int, bool) {}
+
+// T2 doesn't implement I as parameters of M1 and M2 are different.
+type T2 int
+func (t2 T2) M1(int, bool) {}
+func (t2 T2) M2(float64, string) {}
+```
+
+Mind that variadic type variable is not a type variable. It's not valid to use "..." in method with variadic type variable.
+
+```go
+type I interface {
+	generic(...Args)
+
+	// Compile-time error.
+	// Args is not a type variable. Adding "..." doesn't make any sense.
+	InvalidM(...Args)
+}
+```
+
+Variadic type variables can appear in any position of parameters or result. Compiler will try its best to find a matchable pattern.
+
+```go
+type I interface {
+	generic(...Args, ...Return)
+	M1(int, Args) (Return, error)
+}
+
+// T implements I.
+// Args is instantiated as (float64, string).
+// Result is instantiated as (T, bool).
+type T int
+func (t T) M1(int, float64, string) (T, bool, error) {}
+```
+
+Two variadic type variables in generic interface cannot be used in one parameters or result declaration, as there is no way for compiler to decide how to instantiate these type variables.
+
+```go
+type I interface {
+	generic(...Args1, ...Args2)
+
+	// Compile-time error. Args1 and Args2 cannot be used in one parameters declaration.
+	InvalidM(Args1, Args2)
 }
 ```
 
@@ -496,8 +578,8 @@ When a variable's type is `generic`, it's a type variable.
 
 var T1 generic
 T2 := generic(1)
-func (T3 generic) (T4, T5 generic)
-func (T6 ...generic)
+func (T3 generic) (T4, T5 generic) {}
+func (T6 ...generic) {}
 ```
 
 However, `generic` itself is not a type variable. One cannot use `generic` to instantiate generic struct or define type with array, slice, `map` or `chan`.
@@ -636,25 +718,410 @@ type W struct {
 
 ## Generator ##
 
+Generator is a special function or method which can be used to control the iteration behavior of a loop. When a function or method has only one result parameter in which identifier name is `yield` and type is a function, it's a generator.
+
+```go
+// Valid. Gen1 is a generator function.
+func Gen2() (yield func(int)) {}
+
+// Valid. Gen2 is a generator method.
+func (s S) Gen2() (yield func(int)) {}
+
+// Valid. Type of `yield` can be a function returning values.
+func Gen3() (yield func(int) bool) {}
+
+// Compile-time error. The identifier `yield` cannot be used elsewhere.
+func F1(yield int) {}
+
+// Compile-time error. Type of `yield` must be a function.
+func F2() (yield int) {}
+
+// Compile-time error. Only one parameter in result is allowed.
+func F3() (yield func(int), s S) {}
+func F4() (s S, yield func(int)) {}
+```
+
+Type of `yield` in result must be a function. This function cannot take any type variable in function signature, both parameters and result.
+
+```go
+// Compile-time error. Type of `yield` cannot take any type variable.
+func F() (yield func(T generic)) {}
+```
+
+When caller calls a generator, the generator will return an iterator value. The returned iterator has `Next` method. Method signature is determined by `yield` type in generator. Specifically, `Next` method's result type is all `yield` parameters plus a bool indicating done; `Next` method parameters is `yield` result.
+
+```go
+func Gen() (yield func(int, float32) string) {}
+
+iter := Gen()
+
+// Next signature is func(string) (int, float32, bool).
+iter.Next("foo")
+```
+
+Caller uses iterator value's `Next` method to get value from generator. On the other hand, generator uses `yield` as a function inside function body to generate value one by one. Once `yield` is called, generator will be halted until caller consumes the value. If generator returns using `return` statement or is panic, future calls to `Next` will always return zero yielded values plus a true, which means iteration is done.
+
+```go
+func Gen() (yield func(int)) {
+	fmt.Println("Gen: before yield.")
+	yield(1)
+	fmt.Println("Gen: 1st yield is called.")
+	yield(3)
+	fmt.Println("Gen: 2nd yield is called.")
+}
+
+func main() {
+	iter := Gen()
+
+	// As `yield` type is func(int), type of Next method is func() (int, bool)
+	fmt.Println("main: before first Next.")
+	fmt.Println(iter.Next())
+	fmt.Println("main: 1st Next is called.")
+	fmt.Println(iter.Next())
+	fmt.Println("main: 2nd Next is called.")
+	fmt.Println(iter.Next())
+	fmt.Println("main: 3rd Next is called.")
+	// Output:
+	// main: before first Next.
+	// Gen: before yield.
+	// 1	false
+	// main: 1st Next is called.
+	// Gen: 1st yield is called.
+	// 3	false
+	// main: 2nd Next is called.
+	// Gen: 2nd yield is called.
+	// 0	true
+	// main: 3rd Next is called.
+}
+```
+
+When `yield` is a function returning values, caller can use `Next` method to set values returned by `yield`. First call to `Next` method is special. A generator can only get returning values by calling `yield`. As code in generator doesn't start executing until `Next` is called for first time, there is no `yield` at begining thus no way to retrieve first `Next` parameters in generator. It's a by-design behavior.
+
+```go
+func Gen() (yield func() int) {
+	fmt.Println("yield:", yield())
+	fmt.Println("yield:", yield())
+}
+
+func main() {
+	iter := Gen()
+	iter.Next(1) // Parameters in first Next cannot be retrieved in generator.
+	iter.Next(2)
+	iter.Next(3)
+	// Output:
+	// yield: 2
+	// yield: 3
+}
+```
+
+Iterator value returned by generator can work with `range` expression. Type of iteration variables in `range` clause are determined by `yield` parameter types. Count of iterator variables must be not greater than that of `yield` parameters.
+
+```go
+func Gen() (yield func(int, float64)) {
+	yield(1, 2.3)
+	yield(2, 3.4)
+}
+
+func main() {
+	// Output:
+	// 1	2.3
+	// 2	3.4
+	for i, j := range Gen() {
+		fmt.Println(i, j)
+	}
+
+	// Output:
+	// 1
+	// 2
+	for i := range Gen() {
+		fmt.Println(i)
+	}
+
+	// Output:
+	// 2.3
+	// 3.4
+	for _, j := range Gen() {
+		fmt.Println(j)
+	}
+}
+
+func illegal() {
+	// Compile-time error. Gen's `yield` only yields two values at most.
+	for i, j, k := range Gen() {
+		// ...
+	}
+}
+```
+
+All iterator values implement `Iterator` type. This type is defined in `github.com/go-rat/rat/types`.
+
+```go
+// Defined in "github.com/go-rat/rat/types".
+type Iterator interface {
+	generic(...Yield, ...Result)
+	Next(Result) (Yield, bool)
+}
+
+func Gen() (yield func(int)) {}
+
+// Valid.
+var it Iterator = Gen()
+it.Next()
+```
+
+## Overriding ##
+
+Many `go` built-in functions and operators only work with built-in types like map, slice and chan. `Rat` extends them to work with custom types by overriding mechanism.
+
+Override mechanism is based on interface types. Every built-function or operator, which can be overridden, has one special interface for overriding. If a type implements the interface, it can override the respective function or operator.
+
+If one decides to use overriding feature, one should make sure semantics of overridden function or operator is not changed.
+
+For example, built-in function `cap` expects a value implements `CapOverrider` interface, which is defined as following.
+
+```go
+type CapOverrider interface {
+	OverrideCap() int
+}
+```
+
+If a type implements `CapOverrider`, `CapOverrider` will be called when `cap` is called against type's value.
+
+```go
+type Array []int
+
+func (arr Array) OverrideCap() int {
+	return 10
+}
+
+var a Array
+println(cap(a)) // Always prints 10.
+```
+
+All interfaces related to overriding are defined in `github.com/go-rat/rat/types`.
+
+### Built-in function `new` ###
+
+A type must implement `NewOverrider` to override `new`. Receiver in `OverrideNew` method is initialized to zero value.
+
+```go
+type NewOverrider interface {
+	generic() Receiver
+	OverrideNew() Receiver
+}
+```
+
+Following is an example.
+
+```go
+type S struct {
+	V int
+}
+
+// Override `new`.
+func (s *S) OverrideNew() *S {
+	// Receiver `s` is set to zero value.
+
+	// Set s.V to a special value.
+	return &S{
+		V: 1,
+	}
+}
+
+s := new(S)
+s.V == 1 // true
+```
+
+### Built-in function `make` ###
+
+A type must implement `MakeOverrider` to override `make`. Receiver in `OverrideMake` method is initialized to zero value.
+
+```go
+type MakeOverrider interface {
+	generic(...Args) Receiver
+	OverrideMake(Args) Receiver
+}
+```
+
+Following is an example.
+
+```go
+type S struct {
+	Data []int
+}
+
+// Override `make`.
+func (s *S) OverrideMake(size, cap int) *S {
+	// Receiver `s` is set to zero value.
+
+	// Set s.V to a special value.
+	return &S{
+		Data: make(generic(S.Data), size, cap),
+	}
+}
+
+s := make(S, 10, 20)
+len(s.Data) == 10 // true
+cap(s.Data) == 20 // true
+```
+
+### Built-in function `delete` ###
+
+A type must implement `DeleteOverrider` to override `delete`. Receiver in `OverrideDelete` method is set to the first parameter of `delete`.
+
+```go
+type DeleteOverrider interface {
+	generic(Index)
+	OverrideDelete(Index)
+}
+```
+
+Following is an example.
+
+```go
+type S struct {
+	M map[string]int
+}
+
+// Override `delete`.
+func (s *S) OverrideDelete(index string) {
+	delete(s.M, index)
+}
+
+s := &S{}
+s.M = make(generic(s.M)) // Make a map value.
+s.M["foo"] = 123
+
+delete(s, "foo")
+s.M["foo"] == nil // true
+```
+
+### Built-in function `cap` ###
+
+A type must implement `CapOverrider` to override `cap`. Receiver in `OverrideCap` method is set to the first parameter of `cap`.
+
+```go
+type CapOverrider interface {
+	OverrideCap() int
+}
+```
+
+Following is an example.
+
+```go
+type T []int
+
+// Override `cap`.
+func (t T) OverrideCap() int {
+	return 10
+}
+
+var t T
+cap(t) == 10 // true
+```
+
+### Built-in function `len` ###
+
+A type must implement `LenOverrider` to override `len`. Receiver in `OverrideLen` method is set to the first parameter of `len`.
+
+```go
+type LenOverrider interface {
+	OverrideLen() int
+}
+```
+
+Following is an example.
+
+```go
+type T []int
+
+// Override `len`.
+func (t T) OverrideLen() int {
+	return 10
+}
+
+var t T
+len(t) == 10 // true
+```
+
+### Built-in function `close` ###
+
+A type must implement `CloseOverrider` to override `close`. Receiver in `OverrideClose` method is set to the first parameter of `close`.
+
+```go
+type CapOverrider interface {
+	OverrideClose()
+}
+```
+
+Following is an example.
+
+```go
+type T chan int
+
+// Override `close`.
+func (t T) OverrideClose() int {
+	println("Closing...")
+
+	// Cast T to a plain chan type to avoid recursive call.
+	var c chan int = t
+	close(c)
+}
+
+t := make(T)
+close(t) // Output: Closing...
+```
+
+### Range expression ###
+
+A type must implement `RangeOverrider` to work with `range` expression. Receiver in `OverrideRange` method is set to expression value in `range` clause.
+
+```go
+type RangeOverrider interface {
+	generic(...Args)
+	OverrideRange() (yield func(Args))
+}
+```
+
+Following is an example.
+
+```go
+type S struct {
+	Data []int
+}
+
+// Override `range` expression.
+func (s *S) OverrideRange() (yield func(int, int)) {
+	for i := range s.Data {
+		yield(i, i * 2)
+	}
+}
+
+s := &S{}
+s.Data = []int{1, 2, 3, 4}
+
+// Output:
+// 1	2
+// 2	4
+// 3	6
+// 4	8
+for i, j := range s {
+	fmt.Println(i, j)
+}
+```
+
+### Index expression ###
+
 TBD
 
-## Overloading ##
-
-### Built-in function overloading ###
+### Slice express ###
 
 TBD
 
-* `make`
-* `new`
-* `delete`
-* `range`
-* `cap`
-* `len`
-* `close`
-
-### Operator overloading ###
+### Receiver operator ###
 
 TBD
 
-* operator `[]`
-* operator `<-`
+### Send statement ###
+
+TBD
