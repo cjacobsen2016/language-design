@@ -31,4 +31,3 @@ type SuperListNode struct {
 	ListNode              // Generic struct can be an anonymous field.
 }
 ```
-generic
