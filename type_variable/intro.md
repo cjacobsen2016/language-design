@@ -33,7 +33,7 @@ func F(T generic, i int) (S generic, ok bool) {}
 // Use type variable in struct.
 type S struct {
 	T     generic
-	Value S.T     // Use T in struct context.
+	Value T       // Use T in struct context.
 }
 
 // Use type variable in type assertion.
