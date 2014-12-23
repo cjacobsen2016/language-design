@@ -1,14 +1,16 @@
 ## Overview ##
 
-Go does have generic syntax. Look at `map` and `chan`. Both of them can be "instantiated" with any provided type. Unfortunately, such generic syntax doesn't work with custom types. Type `map[int]string` or `chan int` is valid but `MyStruct[Foo]Bar` or `MyStruct Foo` is not. Go compiler treats `map` and `chan` as keywords rather than type identifier. Moreover, such generic syntax is not extensible. It's nearly impossible to extend such syntax to support any number of generic types in one type.
+Go does have generic.
 
-It's' easy to borrow generic/template syntax from other languages, but it may not work well with Go. For example, interfaces may be broken due to method overloading caused by generic instantiation.
+Look at `map` and `chan`. Both of them can be "instantiated" with any provided type. Unfortunately, such generic syntax doesn't work with custom types. Type `map[int]string` or `chan int` is valid but `MyStruct[Foo]Bar` or `MyStruct Foo` is not. Go compiler treats `map` and `chan` as keywords rather than type identifier. Moreover, such syntax is not extensible. It's nearly impossible to extend it to support any number of generic types in one type.
+
+It's' easy to borrow generic/template syntax from other languages, but it may not work well with Go. For example, interfaces may be broken due to method overloading caused by generic type instantiation.
 
 Is it possible to find out a Go-ish design for generic?
 
 The answer is positive. That's the "type variable" introduced by Rat.
 
-Thinking of the essence of generic: Reuse code with different types. This is a specific problem only in static typed language in which type must be hard-coded in code. If a type can be used as a variable, the problem will be resolved automatically.
+Thinking of the essence of generic: Reuse code with different types in different context. This is a specific problem only in static typed language, as type must be hard-coded in code. If a type can be used as a variable, the problem will be resolved automatically.
 
 In Rat, every type is a varaible. The type of type variable is `generic`, a special type introduced by Rat. Type variable can be used in any expression like value variable. Function can take type variable as parameter or return type variable as result. Struct can have type variable as field.
 
