@@ -9,8 +9,6 @@ One can use `generic` as a function. It takes any variable as parameter.
 * Type of `nil` is a zero type.
 * If no parameter is provided, return a zero type.
 
-Blank identifier `_` can be used in `generic` function to indicate one wants to partially instantiate a generic struct.
-
 ```go
 // Get type of a value variable.
 var v1 int
@@ -27,8 +25,6 @@ type S struct {
 }
 T4  := generic(S, int, float64) // Instantiate S while `S.T1 = int` and `S.T2 = float64`.
 T5  := generic(S)               // Define a new type variable based on S.
-T7  := generic(S, _, int)       // Partial instantiate S. S.T1 is still undefined.
-T8  := generic(T7, float64, _)  // Fully instantiate S.
 T9  := generic(S, bool)         // Compile-time error. S needs two type variables.
 T10 := generic(T7, float64)     // Compile-time error. T7 still needs two type variables.
 
