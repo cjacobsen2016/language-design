@@ -3,7 +3,7 @@
 A type must implement `CloseOverrider` to override `close`. Method receiver is set to the first parameter of `close`.
 
 ```go
-type CapOverrider interface {
+type CloseOverrider interface {
 	OverrideClose()
 }
 ```
