@@ -33,10 +33,10 @@ s := &Slice{
 	ElemType: int,
 }
 
-s = s.Append(1, 2, 3) // As ElemType is set to int, Append accepts int as input.
+s = s.Append(1, 2, 3) // Append's type is `func(...int) *Slice`.
 println(s.Data)       // Prints: [1 2 3]
 ```
 
 There is no new syntax for type variable. Rat just introduces a new type to represent type itself. With this design, Rat can keep 100% compatibility with Go at syntax level. Gophers should feel quite familiar with Rat at the first glance. Packages like `go/scanner` can work with Rat source files without any modification.
 
-Rat also introduces generator and overriding to enable custom type to work with `range` expression, built-in functions and operators. With all these features, one can write a custom data structure to replace built-in `map`, `chan`, array or slice.
+Rat also introduces generator and overriding. With all these features, one is able to implement data structure and use it in the same way as built-in `map`, `chan`, array or slice.

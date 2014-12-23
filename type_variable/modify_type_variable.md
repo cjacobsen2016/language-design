@@ -1,6 +1,9 @@
 ## Modify type variable ##
 
-Type variable is mutable only in current code block and children blocks which can be logically inlined in compile-time. Specifically, type variable can be modified in a child block only if this block is a solely block or a `if` statement whose expression is a compile-time constant.
+Type variable can be modified freely in current code. If it's referred in a child block, it's mutable only in following blocks.
+
+* A solely block;
+* A branch of a `if` statement in which condition can be evaluated at compile-time.
 
 ```go
 const N = 1
@@ -10,31 +13,37 @@ func K(i int) generic {
 
 	// This is a solely block.
 	{
-		T = int8 // Valid as the block can be inlined.
+		// Valid as the block can be inlined.
+		T = int8
 	}
 
 	if T == float64 {
-		return float32 // Valid. `T == float64` is a compile-time constant.
+		// Valid. `T == float64` is a compile-time constant.
+		return float32
 	}
 
 	if N == 1 {
-		return uint8 // Valid. `N == 1` is a compile-time constant.
+		// Valid. `N == 1` is a compile-time constant.
+		return uint8
 	}
 
 	if i == 0 {
-		T = int16 // Compile-time error. `i == 0` cannot be evaluated at compile-time.
+		// Compile-time error.
+		// `i == 0` cannot be evaluated at compile-time.
+		T = int16
 	}
 
 	if i == 0 {
-		return T // Compile-time error.
-		         // Implicitly modifies return value which is defined in outer scope.
+		// Compile-time error.
+		// Return value is implicitly modified.
+		return T
 	}
 
 	return float64
 }
 ```
 
-When a type variable is immutable in a block, value of this variable is determined at the first time it's referred.
+When a type variable is immutable in a block, type variable value is determined at the first time it's referred.
 
 ```go
 // Use type variable in closure.
@@ -51,7 +60,9 @@ func F() {
 }
 
 func M(T generic) {
-	T = int // Compile-time error. T is defined in function signature. It's immutable.
+	// Compile-time error.
+	// T is defined in function signature. It's immutable.
+	T = int
 }
 
 func N(i int) {
@@ -63,9 +74,9 @@ func N(i int) {
 }
 ```
 
-It's always meanless to declare a "zero" type variable in global scope. So it's a Compile-time error if one tries to do this.
+It's always meanless to declare a zero value type variable in global scope. So it's a Compile-time error if one tries to do this.
 
 ```go
-// Declare a "zero" type in global scope will trigger a Compile-time error.
+// Declare a zero value type variable in global scope is an error.
 var T generic
 ```
