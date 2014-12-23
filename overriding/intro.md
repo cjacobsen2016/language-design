@@ -1,6 +1,6 @@
 ## Overriding ##
 
-Many `go` built-in functions and operators only work with built-in types like map, slice and chan. `Rat` extends them to work with custom types by overriding mechanism.
+Many Go built-in functions and operators only work with built-in types like map, slice and chan. Rat extends them to work with custom types by overriding mechanism.
 
 Override mechanism is based on interface types. Every built-function or operator, which can be overridden, has one special interface for overriding. If a type implements the interface, it can override the respective function or operator.
 

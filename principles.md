@@ -1,12 +1,12 @@
 ## Design Principles ##
 
-`Rat` treats `go` as a kind of asm. All `rat` files can be compiled to `go` source files.
+Rat treats Go as a kind of asm. All Rat files can be compiled to Go source files.
 
-The main design goal of `rat` is to allow developers to implement generic containers. Writing container library in `go` is quite painful. One has to use `interface{}` to store all data types, or write lots of similar structs/functions for all necessary types. `Rat` will define and implement a compile time generic like C++ template. One can write code once for all types.
+The main design goal of Rat is to allow developers to implement generic containers. Writing container library in Go is quite painful. One has to use `interface{}` to store all data types, or write lots of similar structs/functions for all necessary types. Rat will define and implement a compile time generic like C++ template. One can write code once for all types.
 
-The main goal is the only goal. All others are non-goals. Adding new features to a newly designed language is quite easy. Let us make it hard at begining. `Rat` should always be lean and focused.
+The main goal is the only goal. All others are non-goals. Adding new features to a newly designed language is quite easy. Let us make it hard at begining. Rat should always be lean and focused.
 
-To be more specific, if a feature is planned in `rat`, it must be a reasonable necessary part to implement following generic `Map`.
+To be more specific, if a feature is planned in Rat, it must be a reasonable necessary part to implement following generic `Map`.
 
 (Note: Syntax in the demo may change in future.)
 

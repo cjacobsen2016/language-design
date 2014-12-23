@@ -1,6 +1,6 @@
 ## Method declaration ##
 
-Method declaration syntax is the same as that in `go`. Type of method parameters can be a type variable field.
+Method declaration syntax is the same as that in Go. Type of method parameters can be a type variable field.
 
 ```go
 type Array struct {
